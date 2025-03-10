@@ -100,8 +100,6 @@ dependencies {
     //Gson For JSON Converter
     implementation(libs.gson)
 
-    // JUnit
-    testImplementation (libs.junit)
 
     testImplementation(libs.mockito.core.v520)
     testImplementation(libs.mockito.kotlin.v510)
@@ -111,10 +109,7 @@ dependencies {
 
     // Coroutines testing (if needed)
     testImplementation(libs.kotlinx.coroutines.test)
-
-
-    implementation (libs.androidx.paging.runtime)
-    implementation (libs.androidx.paging.compose)
+    
 
     testImplementation (libs.turbine)
 
