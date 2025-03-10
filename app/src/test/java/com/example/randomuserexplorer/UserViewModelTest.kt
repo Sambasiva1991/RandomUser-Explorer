@@ -1,7 +1,5 @@
 package com.example.randomuserexplorer
 
-import androidx.lifecycle.viewModelScope
-import app.cash.turbine.test
 import com.example.randomuserexplorer.data.model.User
 import com.example.randomuserexplorer.data.model.nestedmodels.Coordinates
 import com.example.randomuserexplorer.data.model.nestedmodels.Dob
@@ -17,16 +15,12 @@ import com.example.randomuserexplorer.data.repository.UserRepository
 import com.example.randomuserexplorer.utiles.DummyData
 import com.example.randomuserexplorer.viewmodel.UserViewModel
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.assertFalse
-import junit.framework.TestCase.assertNull
-import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
 import org.junit.*
 import org.junit.runner.RunWith
 import org.mockito.*
-import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.junit.MockitoJUnitRunner
 import org.mockito.kotlin.*
 
