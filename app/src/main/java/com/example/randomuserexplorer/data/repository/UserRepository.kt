@@ -14,21 +14,21 @@ import javax.inject.Singleton
 class UserRepository @Inject constructor(private val apiService: ApiService) {
 
     fun fetchUsers(count: Int): Flow<List<User>> = flow {
-
-        println("Fetching $count UserRepository users...>>>>>")  // Debugging
         try {
-        val response = apiService.getUsers(count)
-        println("Full API Response: >>>>>$response")  // Print entire response
+            val response = apiService.getUsers(count)
 
-        if (response.results.isNotEmpty()) {
-            emit(response.results)  // Emit users if not empty
-        } else {
-            throw Exception("Empty response from API")
-        }
+            if (response.results.isNotEmpty()) {
+                emit(response.results)
+            } else {
+                throw Exception("Empty response from API")
+            }
         } catch (e: SocketTimeoutException) {
+            emit(emptyList())
             throw Exception("Network timeout. Please try again.")
         } catch (e: Exception) {
-            throw Exception("Error fetching users: ${e.message}")
+            emit(emptyList())
+            throw Exception("Network error")
         }
     }.flowOn(Dispatchers.IO)
+
 }

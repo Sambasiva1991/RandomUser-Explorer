@@ -9,73 +9,68 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class UserViewModel @Inject constructor(private val repository: UserRepository) : ViewModel() {
+class UserViewModel @Inject constructor(
+    private val repository: UserRepository
+) : ViewModel() {
+
     private val _userList = MutableStateFlow<List<User>>(emptyList())
-    val userList: StateFlow<List<User>> = _userList
-
-
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+    val userList: StateFlow<List<User>> = _userList.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    fun loadUsers(count: Int) {
-        viewModelScope.launch {
-            _isLoading.value = true  // Start Loading
-            _errorMessage.value = null  // Reset error state
-            try {
-                repository.fetchUsers(count)
-                    .onEach { users ->
-                        _userList.value = users
-                    }
-                    .catch { e ->
-                        _errorMessage.value = e.message
-                    }
-                    .collect({}) // Just collect() without a lambda since onEach handles updates
-            } catch (e: Exception) {
-                _errorMessage.value = e.message
-            } finally {
-                _isLoading.value = false  // Always set loading false after operation
-            }
-        }
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private var totalUsersToFetch = 0
+    private var totalFetchedUsers = 0
+    private val pageSize = 10
+    private var currentPage = 1
+
+    fun loadUsers(userInputSize: Int) {
+        if (_isLoading.value || userInputSize <= 0) return
+
+        totalUsersToFetch = userInputSize
+        totalFetchedUsers = 0
+        currentPage = 1
+        _userList.value = emptyList()
+        _errorMessage.value = null
+
+        fetchNextPage()
     }
 
-//    fun loadUsers(count: Int) {
-//        viewModelScope.launch {
-//            _isLoading.value = true  // Start Loading
-//            _errorMessage.value = null  // Reset error state
-//            try {
-//                repository.fetchUsers(count)
-//                    .catch { e ->
-//                        _errorMessage.value = e.message
-//                        _isLoading.value = false  // Stop loading if error occurs
-//                    }
-//                    .collect { users ->
-//                        _userList.value = users
-//                        _isLoading.value = false  // Stop loading after success
-//                    }
-//            } catch (e: Exception) {
-//                _errorMessage.value = e.message
-//                _isLoading.value = false
-//            }
-//        }
-//
-//    }
-//    fun loadUsers(count: Int) {
-//
-//        println("loadUsers In UserViewModel  >>>>>"+count)
-//        viewModelScope.launch {
-//            repository.fetchUsers(count)
-//                .catch { _userList.value = emptyList() } // Handle error gracefully
-//                .collect { users ->
-//                    _userList.value = users
-//                }
-//        }
-//    }
+    fun fetchNextPage() {
+        if (_isLoading.value || totalFetchedUsers >= totalUsersToFetch) return
+
+        viewModelScope.launch {
+            repository.fetchUsers(pageSize)
+                .onStart { _isLoading.value = true }
+                .catch { e ->
+
+                    _errorMessage.value = e.message ?: "Something went wrong"
+
+                }
+                .collect { users ->
+                    if (users.isEmpty()) {
+                        _errorMessage.value = "No more users available."
+                        return@collect
+                    }
+
+                    val remainingUsers = totalUsersToFetch - totalFetchedUsers
+                    val limitedUsers = users.take(remainingUsers)
+
+                    _userList.update { it + limitedUsers }
+                    totalFetchedUsers += limitedUsers.size
+                    currentPage++
+                }
+
+            _isLoading.value = false
+        }
+    }
 }

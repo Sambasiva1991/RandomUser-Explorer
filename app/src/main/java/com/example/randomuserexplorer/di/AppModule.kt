@@ -30,9 +30,6 @@ object AppModule {
     @Singleton
     fun provideApiService(okHttpClient: OkHttpClient): ApiService {
 
-
-        println("provideApiService   >>>>>")
-
         return Retrofit.Builder()
             .baseUrl("https://randomuser.me/")
             .addConverterFactory(GsonConverterFactory.create())
